@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#1a73e8">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -10,17 +10,47 @@
     <link rel="manifest" href="/static/manifest.json">
     <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
     <title>Makuta Gestion</title>
-    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/style.css?v=2">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 </head>
 <body>
-    <div id="app">
+    <!-- LOCK SCREEN -->
+    <div id="lock-screen" class="lock-screen">
+        <div class="lock-box">
+            <div class="lock-logo">M</div>
+            <h2 id="lock-title">Bienvenue</h2>
+            <p id="lock-subtitle" class="lock-subtitle">Entrez votre code PIN</p>
+            <div class="pin-dots" id="pin-dots">
+                <span class="pin-dot"></span><span class="pin-dot"></span>
+                <span class="pin-dot"></span><span class="pin-dot"></span>
+            </div>
+            <input type="password" id="pin-input" maxlength="4" inputmode="numeric" pattern="[0-9]*" autocomplete="off">
+            <div class="pin-error hidden" id="pin-error">Code incorrect</div>
+            <div class="pin-keypad" id="pin-keypad">
+                <button class="pin-key" data-value="1">1</button>
+                <button class="pin-key" data-value="2">2</button>
+                <button class="pin-key" data-value="3">3</button>
+                <button class="pin-key" data-value="4">4</button>
+                <button class="pin-key" data-value="5">5</button>
+                <button class="pin-key" data-value="6">6</button>
+                <button class="pin-key" data-value="7">7</button>
+                <button class="pin-key" data-value="8">8</button>
+                <button class="pin-key" data-value="9">9</button>
+                <button class="pin-key pin-key-empty"></button>
+                <button class="pin-key" data-value="0">0</button>
+                <button class="pin-key pin-key-back" id="pin-back">&#x232B;</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="app" class="hidden">
         <header>
             <div class="header-left">
                 <h1>Makuta Gestion</h1>
             </div>
             <div class="header-right">
-                <span id="sync-status" class="sync-status" title="Synchronisation">&#x2601;</span>
+                <button id="settings-btn" class="header-btn" title="Parametres">&#x2699;</button>
+                <span id="sync-status" class="sync-status" title="Synchro">&#x2601;</span>
                 <span id="offline-badge" class="badge badge-offline hidden">Hors ligne</span>
                 <span id="online-badge" class="badge badge-online">En ligne</span>
             </div>
@@ -60,6 +90,15 @@
                             <span class="card-amount-cdf" id="balance-cdf">0 FC</span>
                         </div>
                     </div>
+                </div>
+
+                <!-- BUDGET PROGRESS -->
+                <div class="card" id="budget-progress-card">
+                    <div class="card-header">
+                        <h2>Budget du mois</h2>
+                        <a href="#" id="budget-all-link" class="card-link">Voir tout</a>
+                    </div>
+                    <div id="budget-progress-list"></div>
                 </div>
 
                 <div class="card chart-card">
@@ -143,9 +182,7 @@
             <!-- PAGE HISTORIQUE -->
             <section id="page-historique" class="page">
                 <div class="card">
-                    <div class="card-header">
-                        <h2>Filtres</h2>
-                    </div>
+                    <div class="card-header"><h2>Filtres</h2></div>
                     <div class="filter-grid">
                         <div class="form-group">
                             <label>Recherche</label>
@@ -162,9 +199,7 @@
                             </div>
                             <div class="form-group half">
                                 <label>Categorie</label>
-                                <select id="hist-filter-category">
-                                    <option value="all">Toutes</option>
-                                </select>
+                                <select id="hist-filter-category"><option value="all">Toutes</option></select>
                             </div>
                         </div>
                         <div class="form-row">
@@ -179,7 +214,6 @@
                         </div>
                     </div>
                 </div>
-
                 <div class="card">
                     <div class="card-header">
                         <h2>Transactions</h2>
@@ -192,40 +226,27 @@
             <!-- PAGE DEPENSES -->
             <section id="page-depenses" class="page">
                 <div class="card">
-                    <div class="card-header">
-                        <h2>Depenses par categorie</h2>
-                    </div>
-                    <div class="chart-container">
-                        <canvas id="expenseCategoryChart"></canvas>
-                    </div>
+                    <div class="card-header"><h2>Depenses par categorie</h2></div>
+                    <div class="chart-container"><canvas id="expenseCategoryChart"></canvas></div>
                     <div id="expense-breakdown" class="breakdown-list"></div>
                 </div>
-
                 <div class="card">
                     <div class="card-header">
                         <h2>Evolution des depenses</h2>
                         <select id="expense-period" class="chart-year-select">
-                            <option value="weekly">Cette semaine</option>
+                            <option value="weekly">7 jours</option>
                             <option value="monthly" selected>Ce mois</option>
                             <option value="yearly">Cette annee</option>
                         </select>
                     </div>
-                    <div class="chart-container">
-                        <canvas id="expenseTrendChart"></canvas>
-                    </div>
+                    <div class="chart-container"><canvas id="expenseTrendChart"></canvas></div>
                 </div>
-
                 <div class="card">
-                    <div class="card-header">
-                        <h2>Top depenses</h2>
-                    </div>
+                    <div class="card-header"><h2>Top depenses</h2></div>
                     <div id="top-expenses-list"></div>
                 </div>
-
                 <div class="card">
-                    <div class="card-header">
-                        <h2>Depenses du jour</h2>
-                    </div>
+                    <div class="card-header"><h2>Depenses du jour</h2></div>
                     <div id="today-expenses"></div>
                 </div>
             </section>
@@ -233,31 +254,36 @@
             <!-- PAGE INSIGHTS -->
             <section id="page-insights" class="page">
                 <div class="card">
-                    <div class="card-header">
-                        <h2>Resume du mois</h2>
-                    </div>
+                    <div class="card-header"><h2>Resume du mois</h2></div>
                     <div class="insight-grid" id="month-summary"></div>
                 </div>
-
                 <div class="card">
-                    <div class="card-header">
-                        <h2>Comparaison mois precedent</h2>
-                    </div>
+                    <div class="card-header"><h2>Comparaison mois precedent</h2></div>
                     <div class="comparison" id="month-comparison"></div>
                 </div>
-
                 <div class="card insight-card">
-                    <div class="card-header">
-                        <h2>Recommandations</h2>
-                    </div>
+                    <div class="card-header"><h2>Recommandations</h2></div>
                     <div id="recommendations-list"></div>
                 </div>
+                <div class="card">
+                    <div class="card-header"><h2>Conseils</h2></div>
+                    <div id="tips-list" class="tips-list"></div>
+                </div>
+            </section>
 
+            <!-- PAGE LIMITES -->
+            <section id="page-limites" class="page">
                 <div class="card">
                     <div class="card-header">
-                        <h2>Conseils</h2>
+                        <h2>Limites mensuelles</h2>
+                        <button id="add-limit-btn" class="btn-small">+ Ajouter</button>
                     </div>
-                    <div id="tips-list" class="tips-list"></div>
+                    <p class="card-subtitle">Definissez une limite de depenses par categorie chaque mois.</p>
+                    <div id="limits-list"></div>
+                </div>
+                <div class="card">
+                    <div class="card-header"><h2>Historique des limites</h2></div>
+                    <div id="limits-history"></div>
                 </div>
             </section>
         </main>
@@ -265,7 +291,7 @@
         <nav id="bottom-nav" class="bottom-nav">
             <button class="nav-item active" data-page="page-dashboard">
                 <span class="nav-icon">&#x2302;</span>
-                <span class="nav-label">Tableau</span>
+                <span class="nav-label">Accueil</span>
             </button>
             <button class="nav-item" data-page="page-historique">
                 <span class="nav-icon">&#x2630;</span>
@@ -279,21 +305,106 @@
                 <span class="nav-icon">&#x2605;</span>
                 <span class="nav-label">Insights</span>
             </button>
+            <button class="nav-item" data-page="page-limites">
+                <span class="nav-icon">&#x25A3;</span>
+                <span class="nav-label">Limites</span>
+            </button>
         </nav>
 
-        <!-- Modal -->
-        <div id="modal" class="modal hidden">
+        <!-- SETTINGS MODAL -->
+        <div id="settings-modal" class="modal hidden">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h3 id="modal-title">Modifier</h3>
-                    <button id="modal-close">&times;</button>
+                    <h3>Parametres</h3>
+                    <button id="settings-close">&times;</button>
                 </div>
-                <div id="modal-body"></div>
+                <div class="modal-body">
+                    <div class="settings-section">
+                        <h4>Code PIN</h4>
+                        <p class="settings-desc">Protegez votre application par un code PIN.</p>
+                        <button id="change-pin-btn" class="btn-outline">Changer le code PIN</button>
+                    </div>
+                    <div class="settings-section">
+                        <h4>Donnees</h4>
+                        <p class="settings-desc">Les donnees sont stockees localement sur votre appareil et synchronisees avec le serveur quand vous etes en ligne.</p>
+                        <button id="export-data-btn" class="btn-outline">Exporter les donnees</button>
+                        <button id="clear-data-btn" class="btn-outline btn-danger">Tout effacer</button>
+                    </div>
+                    <div class="settings-section">
+                        <h4>A propos</h4>
+                        <p class="settings-desc">Makuta Gestion v1.0 - Application offline-first de gestion financiere en USD et FC.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ADD/EDIT LIMIT MODAL -->
+        <div id="limit-modal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 id="limit-modal-title">Ajouter une limite</h3>
+                    <button id="limit-modal-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="limit-form">
+                        <div class="form-group">
+                            <label>Categorie</label>
+                            <select id="limit-category" required>
+                                <option value="Nourriture">Nourriture</option>
+                                <option value="Transport">Transport</option>
+                                <option value="Logement">Logement</option>
+                                <option value="Sante">Sante</option>
+                                <option value="Education">Education</option>
+                                <option value="Loisir">Loisir</option>
+                                <option value="Autre">Autre</option>
+                            </select>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group half">
+                                <label>Limite USD ($)</label>
+                                <input type="number" step="0.01" min="0" id="limit-usd" placeholder="0.00">
+                            </div>
+                            <div class="form-group half">
+                                <label>Limite FC</label>
+                                <input type="number" step="1" min="0" id="limit-cdf" placeholder="0">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-primary">Enregistrer</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- CHANGE PIN MODAL -->
+        <div id="pin-modal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Changer le code PIN</h3>
+                    <button id="pin-modal-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="pin-change-form">
+                        <div class="form-group">
+                            <label>Ancien code PIN</label>
+                            <input type="password" id="old-pin" maxlength="4" inputmode="numeric" pattern="[0-9]*" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Nouveau code PIN (4 chiffres)</label>
+                            <input type="password" id="new-pin" maxlength="4" inputmode="numeric" pattern="[0-9]*" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Confirmer le nouveau PIN</label>
+                            <input type="password" id="confirm-pin" maxlength="4" inputmode="numeric" pattern="[0-9]*" required>
+                        </div>
+                        <p id="pin-change-error" class="form-error hidden"></p>
+                        <button type="submit" class="btn-primary">Changer le PIN</button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
 
     <div id="toast" class="toast hidden"></div>
-    <script src="/static/js/app.js"></script>
+    <script src="/static/js/app.js?v=2"></script>
 </body>
 </html>
