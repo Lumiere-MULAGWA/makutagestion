@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#1a73e8">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Makuta Gestion">
+    <link rel="manifest" href="/static/manifest.json">
+    <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
+    <title>Makuta Gestion</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div id="app">
+        <header>
+            <h1>Makuta Gestion</h1>
+            <div id="status">
+                <span id="offline-badge" class="badge badge-offline hidden">Hors ligne</span>
+                <span id="online-badge" class="badge badge-online">En ligne</span>
+            </div>
+        </header>
+
+        <div id="install-banner" class="install-banner hidden">
+            <span>Installer l'application</span>
+            <button id="install-btn">Installer</button>
+            <button id="dismiss-install">X</button>
+        </div>
+
+        <section id="summary">
+            <div class="summary-card">
+                <div class="summary-item income">
+                    <span class="label">Revenus</span>
+                    <span class="amount" id="total-income-usd">$0</span>
+                    <span class="amount-cdf" id="total-income-cdf">0 FC</span>
+                </div>
+                <div class="summary-item expense">
+                    <span class="label">Depenses</span>
+                    <span class="amount" id="total-expense-usd">$0</span>
+                    <span class="amount-cdf" id="total-expense-cdf">0 FC</span>
+                </div>
+                <div class="summary-item balance">
+                    <span class="label">Solde</span>
+                    <span class="amount" id="balance-usd">$0</span>
+                    <span class="amount-cdf" id="balance-cdf">0 FC</span>
+                </div>
+            </div>
+        </section>
+
+        <section id="add-form">
+            <h2>Nouvelle transaction</h2>
+            <form id="transaction-form">
+                <div class="form-group">
+                    <label>Type</label>
+                    <div class="toggle-group">
+                        <button type="button" class="toggle-btn active" data-value="income" id="type-income">Revenu</button>
+                        <button type="button" class="toggle-btn" data-value="expense" id="type-expense">Depense</button>
+                    </div>
+                    <input type="hidden" name="type" id="type-input" value="income">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group half">
+                        <label>Montant (USD)</label>
+                        <input type="number" step="0.01" min="0" name="amount_usd" id="amount-usd" placeholder="0.00">
+                    </div>
+                    <div class="form-group half">
+                        <label>Montant (FC)</label>
+                        <input type="number" step="1" min="0" name="amount_cdf" id="amount-cdf" placeholder="0">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Description</label>
+                    <input type="text" name="description" id="description" placeholder="Description..." required>
+                </div>
+
+                <div class="form-group">
+                    <label>Categorie</label>
+                    <select name="category" id="category">
+                        <option value="Nourriture">Nourriture</option>
+                        <option value="Transport">Transport</option>
+                        <option value="Logement">Logement</option>
+                        <option value="Sante">Sante</option>
+                        <option value="Education">Education</option>
+                        <option value="Salaire">Salaire</option>
+                        <option value="Business">Business</option>
+                        <option value="Loisir">Loisir</option>
+                        <option value="Autre" selected>Autre</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Date</label>
+                    <input type="date" name="date" id="date" required>
+                </div>
+
+                <button type="submit" class="btn-primary">Ajouter</button>
+            </form>
+        </section>
+
+        <section id="transactions">
+            <h2>Transactions</h2>
+            <div class="filter-bar">
+                <select id="filter-type">
+                    <option value="all">Tous</option>
+                    <option value="income">Revenus</option>
+                    <option value="expense">Depenses</option>
+                </select>
+                <select id="filter-category">
+                    <option value="all">Toutes categories</option>
+                </select>
+            </div>
+            <div id="transaction-list"></div>
+        </section>
+    </div>
+
+    <div id="toast" class="toast hidden"></div>
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
