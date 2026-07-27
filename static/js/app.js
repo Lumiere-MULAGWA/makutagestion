@@ -265,22 +265,80 @@ window.addEventListener("online", updateStatus);
 window.addEventListener("offline", updateStatus);
 
 // ============ PWA INSTALL ============
+const fabInstall = $("fab-install");
+const installAppBtn = $("install-app-btn");
+const installStatus = $("install-status");
+
+function canInstall() {
+    return deferredPrompt !== null;
+}
+
+function isAlreadyInstalled() {
+    return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
+}
+
+function updateInstallUI() {
+    if (isAlreadyInstalled()) {
+        if (fabInstall) fabInstall.classList.add("hidden");
+        if (installAppBtn) installAppBtn.textContent = "Deja installee";
+        if (installAppBtn) installAppBtn.disabled = true;
+        if (installStatus) installStatus.textContent = "L'application est deja installee.";
+    } else {
+        if (fabInstall) fabInstall.classList.remove("hidden");
+    }
+}
+
 window.addEventListener("beforeinstallprompt", (e) => {
     e.preventDefault();
     deferredPrompt = e;
     installBanner.classList.remove("hidden");
+    updateInstallUI();
 });
 
-installBtn.addEventListener("click", async () => {
-    if (deferredPrompt) {
-        deferredPrompt.prompt();
-        const result = await deferredPrompt.userChoice;
-        if (result.outcome === "accepted") installBanner.classList.add("hidden");
-        deferredPrompt = null;
+async function promptInstall() {
+    if (!deferredPrompt) {
+        if (isAlreadyInstalled()) {
+            showToast("L'application est deja installee");
+            return;
+        }
+        // Show manual instructions
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        if (isIOS) {
+            showToast("Appuyez sur Partager > Ajouter a l'ecran d'accueil");
+        } else {
+            showToast("Menu du navigateur > Installer l'application");
+        }
+        return;
     }
+    deferredPrompt.prompt();
+    const result = await deferredPrompt.userChoice;
+    if (result.outcome === "accepted") {
+        installBanner.classList.add("hidden");
+        showToast("Installation en cours...");
+    }
+    deferredPrompt = null;
+}
+
+installBtn.addEventListener("click", async () => {
+    await promptInstall();
 });
 
 dismissInstall.addEventListener("click", () => installBanner.classList.add("hidden"));
+
+if (fabInstall) {
+    fabInstall.addEventListener("click", async () => {
+        await promptInstall();
+    });
+}
+
+if (installAppBtn) {
+    installAppBtn.addEventListener("click", async () => {
+        await promptInstall();
+    });
+}
+
+// Check if already installed after a small delay
+setTimeout(updateInstallUI, 1000);
 
 // ============ TYPE TOGGLE ============
 typeIncome.addEventListener("click", () => {

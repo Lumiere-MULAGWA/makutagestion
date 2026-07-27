@@ -1,0 +1,6 @@
+finance.db
+__pycache__/
+*.pyc
+.DS_Store
+.git/
+README.md
