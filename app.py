@@ -1,10 +1,14 @@
 import os
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, send_from_directory
 from flask_cors import CORS
 from models import db, Transaction
 from datetime import datetime
 
-app = Flask(__name__)
+app = Flask(
+    __name__,
+    static_folder=os.path.join(os.path.dirname(os.path.abspath(__file__)), "static"),
+    template_folder=os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates"),
+)
 
 # Detect Vercel environment
 is_vercel = os.environ.get("VERCEL", False) or os.environ.get("VERCEL_ENV", False)
