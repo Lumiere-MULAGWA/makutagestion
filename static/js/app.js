@@ -1035,6 +1035,49 @@ async function init() {
     updateStatus();
     await loadFromServer();
     fullRender();
+    handleUrlParams();
+}
+
+// ============ URL PARAMS (shortcuts) ============
+function handleUrlParams() {
+    const params = new URLSearchParams(window.location.search);
+    const action = params.get("action");
+    const page = params.get("page");
+
+    if (action === "income") {
+        // Open dashboard and preselect income
+        typeIncome.click();
+        typeInput.value = "income";
+        form.classList.remove("closed");
+        quickAddArrow.classList.remove("closed");
+        $("amount-usd").focus();
+    } else if (action === "expense") {
+        typeExpense.click();
+        typeInput.value = "expense";
+        form.classList.remove("closed");
+        quickAddArrow.classList.remove("closed");
+        $("amount-usd").focus();
+    } else if (page === "depenses") {
+        document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
+        document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+        document.querySelector('[data-page="page-depenses"]')?.classList.add("active");
+        $("page-depenses")?.classList.add("active");
+    } else if (page === "historique") {
+        document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
+        document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+        document.querySelector('[data-page="page-historique"]')?.classList.add("active");
+        $("page-historique")?.classList.add("active");
+    } else if (page === "insights") {
+        document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
+        document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+        document.querySelector('[data-page="page-insights"]')?.classList.add("active");
+        $("page-insights")?.classList.add("active");
+    }
+
+    // Clean URL
+    if (params.toString()) {
+        window.history.replaceState({}, "", window.location.pathname);
+    }
 }
 
 init();

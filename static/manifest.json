@@ -19,5 +19,65 @@
             "type": "image/png",
             "purpose": "any maskable"
         }
+    ],
+    "shortcuts": [
+        {
+            "name": "Ajouter un revenu",
+            "short_name": "Revenu",
+            "url": "/?action=income",
+            "description": "Ajouter un revenu rapidement",
+            "icons": [
+                {
+                    "src": "/static/icons/icon-192.png",
+                    "sizes": "192x192"
+                }
+            ]
+        },
+        {
+            "name": "Ajouter une depense",
+            "short_name": "Depense",
+            "url": "/?action=expense",
+            "description": "Ajouter une depense rapidement",
+            "icons": [
+                {
+                    "src": "/static/icons/icon-192.png",
+                    "sizes": "192x192"
+                }
+            ]
+        },
+        {
+            "name": "Voir les depenses",
+            "short_name": "Depenses",
+            "url": "/?page=depenses",
+            "description": "Voir l'analyse des depenses",
+            "icons": [
+                {
+                    "src": "/static/icons/icon-192.png",
+                    "sizes": "192x192"
+                }
+            ]
+        }
+    ],
+    "widgets": [
+        {
+            "name": "Makuta Solde",
+            "description": "Affiche votre solde actuel",
+            "tag": "makuta-balance",
+            "ms_ac_template": "widget/balance.json",
+            "data": "/static/widget-data.json",
+            "screenshots": [],
+            "icons": [
+                {
+                    "src": "/static/icons/icon-192.png",
+                    "sizes": "192x192"
+                }
+            ],
+            "backgrounds": [
+                {
+                    "src": "/static/icons/icon-512.png",
+                    "sizes": "512x512"
+                }
+            ]
+        }
     ]
 }
