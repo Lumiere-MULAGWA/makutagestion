@@ -1014,36 +1014,30 @@ form.addEventListener("submit", (e) => {
 async function init() {
     loadLocal();
     updateStatus();
-    // Check if already logged in via session
+
+    // Check if already logged in via server session
+    let serverUser = null;
     try {
         const res = await fetch("/api/auth/me");
         if (res.ok) {
             const data = await res.json();
-            if (data.user) {
-                currentUser = data.user;
-                localStorage.setItem("makuta_user", JSON.stringify(data.user));
-                unlockApp();
-                await loadFromServer();
-                fullRender();
-                handleUrlParams();
-                return;
-            }
+            if (data.user) serverUser = data.user;
         }
     } catch (e) {}
 
-    // Fallback: check localStorage for offline user
-    const saved = localStorage.getItem("makuta_user");
-    if (saved) {
-        try {
-            currentUser = JSON.parse(saved);
-            unlockApp();
-            fullRender();
-            handleUrlParams();
-            return;
-        } catch (e) {}
+    if (serverUser) {
+        currentUser = serverUser;
+        localStorage.setItem("makuta_user", JSON.stringify(serverUser));
+        unlockApp();
+        await loadFromServer();
+        fullRender();
+        handleUrlParams();
+        return;
     }
 
-    // Show auth screen
+    // Server session expired — clear stale localStorage and show auth
+    localStorage.removeItem("makuta_user");
+    currentUser = null;
     initAuth();
     fullRender();
 }
