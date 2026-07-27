@@ -14,31 +14,37 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 </head>
 <body>
-    <!-- LOCK SCREEN -->
-    <div id="lock-screen" class="lock-screen">
+    <!-- AUTH SCREEN -->
+    <div id="auth-screen" class="lock-screen">
         <div class="lock-box">
             <div class="lock-logo">M</div>
-            <h2 id="lock-title">Bienvenue</h2>
-            <p id="lock-subtitle" class="lock-subtitle">Entrez votre code PIN</p>
-            <div class="pin-dots" id="pin-dots">
-                <span class="pin-dot"></span><span class="pin-dot"></span>
-                <span class="pin-dot"></span><span class="pin-dot"></span>
+
+            <!-- LOGIN FORM -->
+            <div id="auth-login">
+                <h2>Connexion</h2>
+                <p class="lock-subtitle">Connectez-vous a votre compte</p>
+                <div class="auth-form">
+                    <input type="email" id="login-email" placeholder="Email" autocomplete="email" class="auth-input">
+                    <input type="password" id="login-password" placeholder="Mot de passe" autocomplete="current-password" class="auth-input">
+                    <div class="auth-error hidden" id="login-error"></div>
+                    <button id="login-btn" class="btn-primary">Se connecter</button>
+                    <p class="auth-switch">Pas encore de compte ? <a href="#" id="show-register">Creer un compte</a></p>
+                </div>
             </div>
-            <input type="password" id="pin-input" maxlength="4" inputmode="numeric" pattern="[0-9]*" autocomplete="off">
-            <div class="pin-error hidden" id="pin-error">Code incorrect</div>
-            <div class="pin-keypad" id="pin-keypad">
-                <button class="pin-key" data-value="1">1</button>
-                <button class="pin-key" data-value="2">2</button>
-                <button class="pin-key" data-value="3">3</button>
-                <button class="pin-key" data-value="4">4</button>
-                <button class="pin-key" data-value="5">5</button>
-                <button class="pin-key" data-value="6">6</button>
-                <button class="pin-key" data-value="7">7</button>
-                <button class="pin-key" data-value="8">8</button>
-                <button class="pin-key" data-value="9">9</button>
-                <button class="pin-key pin-key-empty"></button>
-                <button class="pin-key" data-value="0">0</button>
-                <button class="pin-key pin-key-back" id="pin-back">&#x232B;</button>
+
+            <!-- REGISTER FORM -->
+            <div id="auth-register" class="hidden">
+                <h2>Creer un compte</h2>
+                <p class="lock-subtitle">Rejoignez Makuta Gestion</p>
+                <div class="auth-form">
+                    <input type="text" id="register-name" placeholder="Votre nom" class="auth-input">
+                    <input type="email" id="register-email" placeholder="Email" autocomplete="email" class="auth-input">
+                    <input type="password" id="register-password" placeholder="Mot de passe (4+ caracteres)" autocomplete="new-password" class="auth-input">
+                    <input type="password" id="register-confirm" placeholder="Confirmer le mot de passe" autocomplete="new-password" class="auth-input">
+                    <div class="auth-error hidden" id="register-error"></div>
+                    <button id="register-btn" class="btn-primary">Creer mon compte</button>
+                    <p class="auth-switch">Deja un compte ? <a href="#" id="show-login">Se connecter</a></p>
+                </div>
             </div>
         </div>
     </div>
@@ -326,9 +332,9 @@
                 </div>
                 <div class="modal-body">
                     <div class="settings-section">
-                        <h4>Code PIN</h4>
-                        <p class="settings-desc">Protegez votre application par un code PIN.</p>
-                        <button id="change-pin-btn" class="btn-outline">Changer le code PIN</button>
+                        <h4>Compte</h4>
+                        <p class="settings-desc" id="user-email-display"></p>
+                        <button id="logout-btn" class="btn-outline btn-danger">Se deconnecter</button>
                     </div>
                     <div class="settings-section">
                         <h4>Application</h4>
@@ -382,34 +388,6 @@
                             </div>
                         </div>
                         <button type="submit" class="btn-primary">Enregistrer</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-
-        <!-- CHANGE PIN MODAL -->
-        <div id="pin-modal" class="modal hidden">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3>Changer le code PIN</h3>
-                    <button id="pin-modal-close">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <form id="pin-change-form">
-                        <div class="form-group">
-                            <label>Ancien code PIN</label>
-                            <input type="password" id="old-pin" maxlength="4" inputmode="numeric" pattern="[0-9]*" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Nouveau code PIN (4 chiffres)</label>
-                            <input type="password" id="new-pin" maxlength="4" inputmode="numeric" pattern="[0-9]*" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Confirmer le nouveau PIN</label>
-                            <input type="password" id="confirm-pin" maxlength="4" inputmode="numeric" pattern="[0-9]*" required>
-                        </div>
-                        <p id="pin-change-error" class="form-error hidden"></p>
-                        <button type="submit" class="btn-primary">Changer le PIN</button>
                     </form>
                 </div>
             </div>

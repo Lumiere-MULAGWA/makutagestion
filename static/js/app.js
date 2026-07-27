@@ -3,8 +3,8 @@ let transactions = [];
 let online = navigator.onLine;
 let deferredPrompt = null;
 let charts = {};
+let currentUser = null;
 let budgets = [];
-let pinCode = null;
 
 // ============ DOM REFS ============
 const $ = (id) => document.getElementById(id);
@@ -61,169 +61,151 @@ function today() { return new Date().toISOString().split("T")[0]; }
 function currentMonth() { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0"); }
 function getMonthName(m) { const names = ["Jan","Fev","Mar","Avr","Mai","Juin","Juil","Aou","Sep","Oct","Nov","Dec"]; return names[m-1]||m; }
 
-// ============ PIN AUTH ============
+// ============ AUTH ============
 function initAuth() {
-    pinCode = localStorage.getItem("makuta_pin");
-    if (!pinCode) {
-        $("lock-title").textContent = "Creer un code PIN";
-        $("lock-subtitle").textContent = "Choisissez un code a 4 chiffres";
-        $("pin-error").classList.add("hidden");
-    } else {
-        $("lock-title").textContent = "Bienvenue";
-        $("lock-subtitle").textContent = "Entrez votre code PIN";
-        $("pin-error").classList.add("hidden");
-    }
-    setupPinKeypad();
+    $("auth-login").classList.remove("hidden");
+    $("auth-register").classList.add("hidden");
+    $("login-error").classList.add("hidden");
+    $("register-error").classList.add("hidden");
 }
 
-let pinBuffer = "";
-let pinMode = "verify"; // verify, create, confirm
-let pinTemp = "";
+$("show-register")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    $("auth-login").classList.add("hidden");
+    $("auth-register").classList.remove("hidden");
+});
 
-function setupPinKeypad() {
-    const dots = document.querySelectorAll(".pin-dot");
-    const errorEl = $("pin-error");
+$("show-login")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    $("auth-register").classList.add("hidden");
+    $("auth-login").classList.remove("hidden");
+});
 
-    document.querySelectorAll(".pin-key[data-value]").forEach(btn => {
-        btn.addEventListener("click", () => {
-            const val = btn.dataset.value;
-            if (pinBuffer.length >= 4) return;
-            pinBuffer += val;
-            updatePinDots();
-            if (pinBuffer.length === 4) handlePinComplete();
-        });
-    });
+$("login-btn")?.addEventListener("click", async () => {
+    const email = $("login-email").value.trim();
+    const password = $("login-password").value;
+    const errorEl = $("login-error");
+    errorEl.classList.add("hidden");
 
-    $("pin-back").addEventListener("click", () => {
-        pinBuffer = pinBuffer.slice(0, -1);
-        updatePinDots();
-        errorEl.classList.add("hidden");
-    });
-
-    function updatePinDots() {
-        dots.forEach((d, i) => d.classList.toggle("filled", i < pinBuffer.length));
+    if (!email || !password) {
+        errorEl.textContent = "Email et mot de passe requis";
+        errorEl.classList.remove("hidden");
+        return;
     }
 
-    function handlePinComplete() {
-        const storedPin = localStorage.getItem("makuta_pin");
-        if (!storedPin) {
-            // First time: create PIN
-            if (pinMode === "verify") {
-                pinTemp = pinBuffer;
-                pinMode = "confirm";
-                $("lock-title").textContent = "Confirmer le code";
-                $("lock-subtitle").textContent = "Entrez a nouveau le code";
-                pinBuffer = "";
-                updatePinDots();
-                return;
-            } else if (pinMode === "confirm") {
-                if (pinBuffer === pinTemp) {
-                    localStorage.setItem("makuta_pin", pinBuffer);
-                    pinCode = pinBuffer;
-                    unlockApp();
-                } else {
-                    errorEl.textContent = "Les codes ne correspondent pas";
-                    errorEl.classList.remove("hidden");
-                    pinMode = "verify";
-                    pinBuffer = "";
-                    pinTemp = "";
-                    $("lock-title").textContent = "Creer un code PIN";
-                    $("lock-subtitle").textContent = "Choisissez un code a 4 chiffres";
-                    updatePinDots();
-                }
-                return;
-            }
+    try {
+        const res = await fetch("/api/auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            errorEl.textContent = data.error || "Erreur de connexion";
+            errorEl.classList.remove("hidden");
+            return;
+        }
+        currentUser = data.user;
+        localStorage.setItem("makuta_user", JSON.stringify(data.user));
+        unlockApp();
+    } catch (e) {
+        // Offline fallback: allow login with local password check stored in localStorage
+        const stored = JSON.parse(localStorage.getItem("makuta_local_user") || "null");
+        if (stored && stored.email === email && stored.password === password) {
+            currentUser = stored;
+            unlockApp();
         } else {
-            // Verify PIN
-            if (pinBuffer === storedPin) {
-                unlockApp();
-            } else {
-                errorEl.classList.remove("hidden");
-                pinBuffer = "";
-                updatePinDots();
-                setTimeout(() => errorEl.classList.add("hidden"), 2000);
-            }
+            errorEl.textContent = "Erreur reseau. Verifiez votre connexion.";
+            errorEl.classList.remove("hidden");
         }
     }
-}
+});
 
-function resetPinEntry() {
-    pinBuffer = "";
-    pinMode = "verify";
-    pinTemp = "";
-    document.querySelectorAll(".pin-dot").forEach(d => d.classList.remove("filled"));
-    const storedPin = localStorage.getItem("makuta_pin");
-    if (storedPin) {
-        $("lock-title").textContent = "Bienvenue";
-        $("lock-subtitle").textContent = "Entrez votre code PIN";
-    } else {
-        $("lock-title").textContent = "Creer un code PIN";
-        $("lock-subtitle").textContent = "Choisissez un code a 4 chiffres";
+$("register-btn")?.addEventListener("click", async () => {
+    const name = $("register-name").value.trim();
+    const email = $("register-email").value.trim();
+    const password = $("register-password").value;
+    const confirm = $("register-confirm").value;
+    const errorEl = $("register-error");
+    errorEl.classList.add("hidden");
+
+    if (!email || !password) {
+        errorEl.textContent = "Email et mot de passe requis";
+        errorEl.classList.remove("hidden");
+        return;
     }
-    $("pin-error").classList.add("hidden");
-}
+    if (password !== confirm) {
+        errorEl.textContent = "Les mots de passe ne correspondent pas";
+        errorEl.classList.remove("hidden");
+        return;
+    }
+    if (password.length < 4) {
+        errorEl.textContent = "Mot de passe trop court (4 min)";
+        errorEl.classList.remove("hidden");
+        return;
+    }
+
+    try {
+        const res = await fetch("/api/auth/register", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password, name }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            errorEl.textContent = data.error || "Erreur d'inscription";
+            errorEl.classList.remove("hidden");
+            return;
+        }
+        currentUser = data.user;
+        localStorage.setItem("makuta_user", JSON.stringify(data.user));
+        unlockApp();
+    } catch (e) {
+        // Offline: store locally
+        const localUser = { id: null, email, name, offline: true };
+        localStorage.setItem("makuta_user", JSON.stringify(localUser));
+        localStorage.setItem("makuta_local_user", JSON.stringify({ email, password }));
+        currentUser = localUser;
+        unlockApp();
+    }
+});
 
 function lockApp() {
-    pinBuffer = "";
     $("app").classList.add("hidden");
-    $("lock-screen").classList.remove("hidden");
-    resetPinEntry();
+    $("auth-screen").classList.remove("hidden");
+    currentUser = null;
+    $("login-email").value = "";
+    $("login-password").value = "";
+    initAuth();
 }
 
 function unlockApp() {
-    $("lock-screen").classList.add("hidden");
+    $("auth-screen").classList.add("hidden");
     $("app").classList.remove("hidden");
 }
 
-// Settings: change pin
-$("change-pin-btn")?.addEventListener("click", () => {
-    $("pin-modal").classList.remove("hidden");
-});
-
-$("pin-modal-close")?.addEventListener("click", () => {
-    $("pin-modal").classList.add("hidden");
-});
-
-$("pin-change-form")?.addEventListener("submit", (e) => {
-    e.preventDefault();
-    const oldPin = $("old-pin").value;
-    const newPin = $("new-pin").value;
-    const confirmPin = $("confirm-pin").value;
-    const errorEl = $("pin-change-error");
-
-    if (oldPin !== localStorage.getItem("makuta_pin")) {
-        errorEl.textContent = "Ancien code incorrect";
-        errorEl.classList.remove("hidden");
-        return;
+function logout() {
+    if (confirm("Voulez-vous vous deconnecter ?")) {
+        fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
+        localStorage.removeItem("makuta_user");
+        currentUser = null;
+        lockApp();
     }
-    if (newPin.length !== 4 || !/^\d{4}$/.test(newPin)) {
-        errorEl.textContent = "Le code doit faire 4 chiffres";
-        errorEl.classList.remove("hidden");
-        return;
-    }
-    if (newPin !== confirmPin) {
-        errorEl.textContent = "Les codes ne correspondent pas";
-        errorEl.classList.remove("hidden");
-        return;
-    }
-    localStorage.setItem("makuta_pin", newPin);
-    pinCode = newPin;
-    $("pin-modal").classList.add("hidden");
-    $("old-pin").value = "";
-    $("new-pin").value = "";
-    $("confirm-pin").value = "";
-    errorEl.classList.add("hidden");
-    showToast("Code PIN modifie");
-});
+}
 
 // ============ SETTINGS ============
 $("settings-btn")?.addEventListener("click", () => {
+    if (currentUser) {
+        $("user-email-display").textContent = currentUser.email || "Utilisateur local";
+    }
     $("settings-modal").classList.remove("hidden");
 });
 
 $("settings-close")?.addEventListener("click", () => {
     $("settings-modal").classList.add("hidden");
 });
+
+$("logout-btn")?.addEventListener("click", logout);
 
 $("clear-data-btn")?.addEventListener("click", () => {
     if (confirm("Voulez-vous vraiment effacer toutes les donnees ?")) {
@@ -1031,11 +1013,39 @@ form.addEventListener("submit", (e) => {
 // ============ INIT ============
 async function init() {
     loadLocal();
-    initAuth();
     updateStatus();
-    await loadFromServer();
+    // Check if already logged in via session
+    try {
+        const res = await fetch("/api/auth/me");
+        if (res.ok) {
+            const data = await res.json();
+            if (data.user) {
+                currentUser = data.user;
+                localStorage.setItem("makuta_user", JSON.stringify(data.user));
+                unlockApp();
+                await loadFromServer();
+                fullRender();
+                handleUrlParams();
+                return;
+            }
+        }
+    } catch (e) {}
+
+    // Fallback: check localStorage for offline user
+    const saved = localStorage.getItem("makuta_user");
+    if (saved) {
+        try {
+            currentUser = JSON.parse(saved);
+            unlockApp();
+            fullRender();
+            handleUrlParams();
+            return;
+        } catch (e) {}
+    }
+
+    // Show auth screen
+    initAuth();
     fullRender();
-    handleUrlParams();
 }
 
 // ============ URL PARAMS (shortcuts) ============

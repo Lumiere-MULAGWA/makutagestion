@@ -104,6 +104,46 @@ body {
 
 .pin-dot.filled { background: white; }
 
+/* AUTH FORM */
+.auth-form { text-align: left; }
+.auth-input {
+    width: 100%;
+    padding: 12px 14px;
+    border: 2px solid rgba(255,255,255,0.25);
+    border-radius: 10px;
+    font-size: 15px;
+    background: rgba(255,255,255,0.12);
+    color: white;
+    margin-bottom: 10px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+.auth-input::placeholder { color: rgba(255,255,255,0.5); }
+.auth-input:focus { border-color: rgba(255,255,255,0.6); }
+
+.auth-error {
+    color: #ffcdd2;
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 8px;
+    text-align: center;
+}
+
+.auth-switch {
+    color: rgba(255,255,255,0.7);
+    font-size: 13px;
+    text-align: center;
+    margin-top: 14px;
+}
+
+.auth-switch a {
+    color: white;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.auth-switch a:hover { text-decoration: underline; }
+
 #pin-input {
     position: absolute;
     opacity: 0;
@@ -367,6 +407,11 @@ input:focus, select:focus { outline: none; border-color: var(--primary); }
     font-weight: 700;
     cursor: pointer;
     transition: opacity 0.2s, transform 0.1s;
+}
+
+.lock-box .btn-primary {
+    background: white;
+    color: #1a73e8;
 }
 
 .btn-primary:hover { opacity: 0.9; }
