@@ -1,8 +1,12 @@
 import os
+from urllib.parse import quote
 from flask import Flask, request, jsonify, render_template, send_from_directory
 from flask_cors import CORS
 from models import db, Transaction
 from datetime import datetime
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = Flask(
     __name__,
@@ -10,17 +14,29 @@ app = Flask(
     template_folder=os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates"),
 )
 
-# Detect Vercel environment
-is_vercel = os.environ.get("VERCEL", False) or os.environ.get("VERCEL_ENV", False)
-
-if is_vercel:
-    # On Vercel: use PostgreSQL if DATABASE_URL is set, otherwise SQLite in /tmp
-    database_url = os.environ.get("DATABASE_URL")
-    if database_url:
-        app.config["SQLALCHEMY_DATABASE_URI"] = database_url.replace("postgres://", "postgresql://")
-    else:
-        app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:////tmp/finance.db"
+# Database: use DATABASE_URL from .env (Supabase PostgreSQL)
+database_url = os.environ.get("DATABASE_URL", "")
+if database_url:
+    # Fix postgres:// to postgresql:// for SQLAlchemy
+    database_url = database_url.replace("postgres://", "postgresql://")
+    # Encode special chars in password (brackets, etc.)
+    # Parse: postgresql://user:password@host/db
+    database_url = database_url.split("?")[0]  # Remove query params
+    parts = database_url.split("@", 1)
+    if len(parts) == 2:
+        prefix = parts[0]
+        suffix = parts[1]
+        colon_idx = prefix.rfind(":")
+        if colon_idx > 0:
+            user = prefix[:colon_idx]
+            password = prefix[colon_idx+1:]
+            password = password.strip("[]")
+            encoded_password = quote(password, safe="")
+            database_url = f"{user}:{encoded_password}@{suffix}"
+    database_url += "?sslmode=require"
+    app.config["SQLALCHEMY_DATABASE_URI"] = database_url
 else:
+    # Fallback to SQLite
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///finance.db"
 
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
