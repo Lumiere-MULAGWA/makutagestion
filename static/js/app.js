@@ -5,6 +5,7 @@ let deferredPrompt = null;
 let charts = {};
 let currentUser = null;
 let budgets = [];
+let previsions = [];
 
 // ============ DOM REFS ============
 const $ = (id) => document.getElementById(id);
@@ -211,8 +212,10 @@ $("clear-data-btn")?.addEventListener("click", () => {
     if (confirm("Voulez-vous vraiment effacer toutes les donnees ?")) {
         localStorage.removeItem("makuta_transactions");
         localStorage.removeItem("makuta_budgets");
+        localStorage.removeItem("makuta_previsions");
         transactions = [];
         budgets = [];
+        previsions = [];
         saveLocal();
         fullRender();
         showToast("Donnees effacees");
@@ -221,7 +224,7 @@ $("clear-data-btn")?.addEventListener("click", () => {
 });
 
 $("export-data-btn")?.addEventListener("click", () => {
-    const data = { transactions, budgets, exportedAt: new Date().toISOString() };
+    const data = { transactions, budgets, previsions, exportedAt: new Date().toISOString() };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -367,11 +370,16 @@ function loadLocal() {
         const data = localStorage.getItem("makuta_budgets");
         if (data) budgets = JSON.parse(data);
     } catch (e) { budgets = []; }
+    try {
+        const data = localStorage.getItem("makuta_previsions");
+        if (data) previsions = JSON.parse(data);
+    } catch (e) { previsions = []; }
 }
 
 function saveLocal() {
     localStorage.setItem("makuta_transactions", JSON.stringify(transactions));
     localStorage.setItem("makuta_budgets", JSON.stringify(budgets));
+    localStorage.setItem("makuta_previsions", JSON.stringify(previsions));
 }
 
 // ============ CRUD ============
@@ -453,6 +461,7 @@ function fullRender() {
     renderExpenses();
     renderInsights();
     renderLimits();
+    renderPrevisions();
     updateSummary();
 }
 
@@ -532,6 +541,77 @@ function renderBudgetProgress() {
             $("page-limites").classList.add("active");
         });
     }
+
+    const gotoPrevLink = $("goto-previsions");
+    if (gotoPrevLink) {
+        gotoPrevLink.addEventListener("click", (e) => {
+            e.preventDefault();
+            gotoPrevisions();
+        });
+    }
+}
+
+function renderDashboardPrevisions() {
+    const list = $("dashboard-previsions-list");
+    if (!previsions.length) {
+        list.innerHTML = '<div class="empty-state">Aucune prevision. <a href="#" id="goto-previsions-dash" class="card-link">Ajouter</a></div>';
+        const link = $("goto-previsions-dash");
+        if (link) link.addEventListener("click", (e) => { e.preventDefault(); gotoPrevisions(); });
+        return;
+    }
+
+    const ym = currentMonth();
+    const monthPrevs = previsions.filter(p => p.month === ym);
+
+    if (!monthPrevs.length) {
+        list.innerHTML = '<div class="empty-state">Aucune prevision pour ce mois.</div>';
+        return;
+    }
+
+    const actualIncome = transactions.filter(t => t.type === "income" && t.date && t.date.startsWith(ym))
+        .reduce((s, t) => ({ usd: s.usd + (t.amount_usd||0), cdf: s.cdf + (t.amount_cdf||0) }), { usd: 0, cdf: 0 });
+    const actualExpense = transactions.filter(t => t.type === "expense" && t.date && t.date.startsWith(ym))
+        .reduce((s, t) => ({ usd: s.usd + (t.amount_usd||0), cdf: s.cdf + (t.amount_cdf||0) }), { usd: 0, cdf: 0 });
+
+    const prevIncome = monthPrevs.filter(p => p.type === "income")
+        .reduce((s, p) => ({ usd: s.usd + (p.amount_usd||0), cdf: s.cdf + (p.amount_cdf||0) }), { usd: 0, cdf: 0 });
+    const prevExpense = monthPrevs.filter(p => p.type === "expense")
+        .reduce((s, p) => ({ usd: s.usd + (p.amount_usd||0), cdf: s.cdf + (p.amount_cdf||0) }), { usd: 0, cdf: 0 });
+
+    const incomePct = prevIncome.usd > 0 ? Math.min(((actualIncome.usd||0) / prevIncome.usd) * 100, 100) : 0;
+    const expensePct = prevExpense.usd > 0 ? Math.min(((actualExpense.usd||0) / prevExpense.usd) * 100, 100) : 0;
+
+    const incomeStatus = incomePct < 70 ? "safe" : incomePct < 100 ? "warning" : "danger";
+    const expenseStatus = expensePct < 70 ? "safe" : expensePct < 100 ? "warning" : "danger";
+
+    list.innerHTML = `
+        <div class="budget-item">
+            <div class="budget-header">
+                <span class="budget-cat">Revenus</span>
+                <span class="budget-status ${incomeStatus}">${incomePct.toFixed(0)}%</span>
+            </div>
+            <div class="budget-bar">
+                <div class="budget-bar-fill ${incomeStatus}" style="width:${incomePct}%"></div>
+            </div>
+            <div class="budget-detail">${formatUSD(actualIncome.usd)} / ${formatUSD(prevIncome.usd)} prevus</div>
+        </div>
+        <div class="budget-item">
+            <div class="budget-header">
+                <span class="budget-cat">Depenses</span>
+                <span class="budget-status ${expenseStatus}">${expensePct.toFixed(0)}%</span>
+            </div>
+            <div class="budget-bar">
+                <div class="budget-bar-fill ${expenseStatus}" style="width:${expensePct}%"></div>
+            </div>
+            <div class="budget-detail">${formatUSD(actualExpense.usd)} / ${formatUSD(prevExpense.usd)} prevus</div>
+        </div>`;
+}
+
+function gotoPrevisions() {
+    document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
+    document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+    document.querySelector('[data-page="page-previsions"]').classList.add("active");
+    $("page-previsions").classList.add("active");
 }
 
 // ============ DASHBOARD ============
@@ -548,6 +628,7 @@ function renderDashboard() {
     });
     initDashboardCharts();
     renderBudgetProgress();
+    renderDashboardPrevisions();
 }
 
 function renderTransactionItem(t) {
@@ -988,6 +1069,177 @@ $("limit-form")?.addEventListener("submit", (e) => {
     showToast(editIndex !== undefined ? "Limite modifiee" : "Limite ajoutee");
 });
 
+// ============ PREVISIONS (FORECASTS) ============
+function renderPrevisions() {
+    const list = $("previsions-list");
+    if (!previsions.length) {
+        list.innerHTML = '<div class="empty-state">Aucune prevision. Cliquez sur "+ Nouvelle prevision" pour planifier vos revenus et depenses.</div>';
+        return;
+    }
+
+    const months = new Set();
+    previsions.forEach(p => months.add(p.month));
+    const sortedMonths = [...months].sort();
+
+    let html = "";
+    sortedMonths.forEach(ym => {
+        const monthPrevs = previsions.filter(p => p.month === ym);
+        const [year, m] = ym.split("-");
+        const monthName = getMonthName(parseInt(m));
+        const label = monthName + " " + year;
+
+        const actualIncome = transactions.filter(t => t.type === "income" && t.date && t.date.startsWith(ym))
+            .reduce((s, t) => ({ usd: s.usd + (t.amount_usd||0), cdf: s.cdf + (t.amount_cdf||0) }), { usd: 0, cdf: 0 });
+        const actualExpense = transactions.filter(t => t.type === "expense" && t.date && t.date.startsWith(ym))
+            .reduce((s, t) => ({ usd: s.usd + (t.amount_usd||0), cdf: s.cdf + (t.amount_cdf||0) }), { usd: 0, cdf: 0 });
+
+        const prevIncome = monthPrevs.filter(p => p.type === "income")
+            .reduce((s, p) => ({ usd: s.usd + (p.amount_usd||0), cdf: s.cdf + (p.amount_cdf||0) }), { usd: 0, cdf: 0 });
+        const prevExpense = monthPrevs.filter(p => p.type === "expense")
+            .reduce((s, p) => ({ usd: s.usd + (p.amount_usd||0), cdf: s.cdf + (p.amount_cdf||0) }), { usd: 0, cdf: 0 });
+
+        const isFuture = ym > currentMonth();
+
+        html += `<div class="prev-month-group">
+            <div class="prev-month-header">
+                <span class="prev-month-label">${label}</span>
+                <span class="prev-month-badge ${isFuture ? 'prev-badge-future' : 'prev-badge-past'}">${isFuture ? 'A venir' : 'Termine'}</span>
+            </div>
+            <div class="prev-summary-row">
+                <div class="prev-summary-item">
+                    <span class="prev-summary-label">Prevu</span>
+                    <span class="prev-summary-value prev-income">${formatUSD(prevIncome.usd)}</span>
+                    <span class="prev-summary-sub">${formatCDF(prevIncome.cdf)}</span>
+                </div>
+                <div class="prev-summary-item">
+                    <span class="prev-summary-label">Reel</span>
+                    <span class="prev-summary-value prev-income">${formatUSD(actualIncome.usd)}</span>
+                    <span class="prev-summary-sub">${formatCDF(actualIncome.cdf)}</span>
+                </div>
+                <div class="prev-summary-item">
+                    <span class="prev-summary-label">Ecart</span>
+                    <span class="prev-summary-value ${(actualIncome.usd||0)+(actualIncome.cdf||0)/3000 >= (prevIncome.usd||0)+(prevIncome.cdf||0)/3000 ? 'prev-income' : 'prev-expense'}">
+                        ${formatUSD(Math.abs((actualIncome.usd||0) - (prevIncome.usd||0)))}
+                    </span>
+                    <span class="prev-summary-sub">${formatCDF(Math.abs((actualIncome.cdf||0) - (prevIncome.cdf||0)))}</span>
+                </div>
+            </div>
+            <div class="prev-summary-row">
+                <div class="prev-summary-item">
+                    <span class="prev-summary-label">Prevu</span>
+                    <span class="prev-summary-value prev-expense">${formatUSD(prevExpense.usd)}</span>
+                    <span class="prev-summary-sub">${formatCDF(prevExpense.cdf)}</span>
+                </div>
+                <div class="prev-summary-item">
+                    <span class="prev-summary-label">Reel</span>
+                    <span class="prev-summary-value prev-expense">${formatUSD(actualExpense.usd)}</span>
+                    <span class="prev-summary-sub">${formatCDF(actualExpense.cdf)}</span>
+                </div>
+                <div class="prev-summary-item">
+                    <span class="prev-summary-label">Ecart</span>
+                    <span class="prev-summary-value ${(actualExpense.usd||0)+(actualExpense.cdf||0)/3000 <= (prevExpense.usd||0)+(prevExpense.cdf||0)/3000 ? 'prev-income' : 'prev-expense'}">
+                        ${formatUSD(Math.abs((actualExpense.usd||0) - (prevExpense.usd||0)))}
+                    </span>
+                    <span class="prev-summary-sub">${formatCDF(Math.abs((actualExpense.cdf||0) - (prevExpense.cdf||0)))}</span>
+                </div>
+            </div>
+            <div class="prev-detail-list">`;
+
+        monthPrevs.forEach((p, i) => {
+            html += `<div class="prev-item">
+                <div class="prev-item-info">
+                    <span class="prev-item-type ${p.type}">${p.type === "income" ? "Revenu" : "Depense"}</span>
+                    <span class="prev-item-cat">${escHtml(p.category || "Sans categorie")}</span>
+                    ${p.description ? `<span class="prev-item-desc">${escHtml(p.description)}</span>` : ""}
+                </div>
+                <div class="prev-item-amounts">
+                    ${p.amount_usd ? `<span class="prev-item-usd">${formatUSD(p.amount_usd)}</span>` : ""}
+                    ${p.amount_cdf ? `<span class="prev-item-cdf">${formatCDF(p.amount_cdf)}</span>` : ""}
+                </div>
+                <div class="prev-item-actions">
+                    <button class="prev-edit" data-index="${previsions.indexOf(p)}">&#x270E;</button>
+                    <button class="prev-delete" data-index="${previsions.indexOf(p)}">&times;</button>
+                </div>
+            </div>`;
+        });
+
+        html += `</div></div>`;
+    });
+
+    list.innerHTML = html;
+
+    list.querySelectorAll(".prev-edit").forEach(btn => {
+        btn.addEventListener("click", () => {
+            const idx = parseInt(btn.dataset.index);
+            const p = previsions[idx];
+            $("prev-modal-title").textContent = "Modifier la prevision";
+            $("prev-type").value = p.type;
+            $("prev-amount-usd").value = p.amount_usd || 0;
+            $("prev-amount-cdf").value = p.amount_cdf || 0;
+            $("prev-month").value = p.month;
+            $("prev-category").value = p.category || "";
+            $("prev-description").value = p.description || "";
+            $("prev-form").dataset.editIndex = idx;
+            $("prev-modal").classList.remove("hidden");
+        });
+    });
+
+    list.querySelectorAll(".prev-delete").forEach(btn => {
+        btn.addEventListener("click", () => {
+            const idx = parseInt(btn.dataset.index);
+            if (confirm("Supprimer cette prevision ?")) {
+                previsions.splice(idx, 1);
+                saveLocal();
+                fullRender();
+                showToast("Prevision supprimee");
+            }
+        });
+    });
+}
+
+function getDefaultMonth() {
+    const d = new Date();
+    const m = d.getMonth() + 1;
+    const future = m < 12 ? m + 1 : 1;
+    const y = m < 12 ? d.getFullYear() : d.getFullYear() + 1;
+    return y + "-" + String(future).padStart(2, "0");
+}
+
+$("add-prev-btn")?.addEventListener("click", () => {
+    $("prev-modal-title").textContent = "Nouvelle prevision";
+    $("prev-form").reset();
+    $("prev-month").value = getDefaultMonth();
+    $("prev-type").value = "income";
+    delete $("prev-form").dataset.editIndex;
+    $("prev-modal").classList.remove("hidden");
+});
+
+$("prev-modal-close")?.addEventListener("click", () => $("prev-modal").classList.add("hidden"));
+
+$("prev-form")?.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const type = $("prev-type").value;
+    const amount_usd = parseFloat($("prev-amount-usd").value) || 0;
+    const amount_cdf = parseFloat($("prev-amount-cdf").value) || 0;
+    const month = $("prev-month").value;
+    const category = $("prev-category").value || "Autre";
+    const description = $("prev-description").value;
+
+    if (!amount_usd && !amount_cdf) { showToast("Entrez au moins un montant"); return; }
+    if (!month) { showToast("Selectionnez un mois"); return; }
+
+    const editIndex = $("prev-form").dataset.editIndex;
+    if (editIndex !== undefined) {
+        previsions[parseInt(editIndex)] = { type, amount_usd, amount_cdf, month, category, description };
+    } else {
+        previsions.push({ type, amount_usd, amount_cdf, month, category, description });
+    }
+    saveLocal();
+    $("prev-modal").classList.add("hidden");
+    fullRender();
+    showToast(editIndex !== undefined ? "Prevision modifiee" : "Prevision ajoutee");
+});
+
 // ============ FORM SUBMIT ============
 form.addEventListener("submit", (e) => {
     e.preventDefault();
@@ -1076,6 +1328,11 @@ function handleUrlParams() {
         document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
         document.querySelector('[data-page="page-insights"]')?.classList.add("active");
         $("page-insights")?.classList.add("active");
+    } else if (page === "previsions") {
+        document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
+        document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+        document.querySelector('[data-page="page-previsions"]')?.classList.add("active");
+        $("page-previsions")?.classList.add("active");
     }
 
     // Clean URL
