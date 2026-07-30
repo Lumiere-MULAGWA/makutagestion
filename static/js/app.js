@@ -649,11 +649,11 @@ function renderTransactionItem(t) {
 }
 
 // ============ CHARTS ============
-const CHART_COLORS = [
-    "#1a73e8","#e8711a","#2e7d32","#c62828","#6a1b9a",
-    "#00838f","#f9a825","#d81b60","#5d4037","#303f9f",
-    "#00796b","#f57c00","#7b1fa2","#c2185b","#455a64"
-];
+    const CHART_COLORS = [
+        "#6C5CE7","#00b894","#e74c3c","#fdcb6e","#0984e3",
+        "#e17055","#00cec9","#a29bfe","#fd79a8","#636e72",
+        "#d63031","#74b9ff","#55efc4","#f6e58d","#ff7675"
+    ];
 
 function initDashboardCharts() {
     const year = parseInt($("chart-year")?.value) || new Date().getFullYear();
@@ -692,8 +692,8 @@ function buildMonthlyChart(year) {
         data: {
             labels: months.map(getMonthName),
             datasets: [
-                { label: "Revenus", data: incomeData, backgroundColor: "rgba(0,184,148,0.7)", borderRadius: 6 },
-                { label: "Depenses", data: expenseData, backgroundColor: "rgba(255,107,107,0.7)", borderRadius: 6 },
+                { label: "Revenus", data: incomeData, backgroundColor: "#00b894", borderRadius: 6 },
+                { label: "Depenses", data: expenseData, backgroundColor: "#e74c3c", borderRadius: 6 },
             ]
         },
         options: {
@@ -861,7 +861,7 @@ function renderExpenseTrend() {
 
     charts.expenseTrend = new Chart(ctx, {
         type: "line",
-        data: { labels, datasets: [{ label: "Depenses", data, borderColor: "#ff6b6b", backgroundColor: "rgba(255,107,107,0.08)", fill: true, tension: 0.4, pointRadius: 3, pointBackgroundColor: "#ff6b6b" }] },
+        data: { labels, datasets: [{ label: "Depenses", data, borderColor: "#e74c3c", backgroundColor: "rgba(231,76,60,0.08)", fill: true, tension: 0.4, pointRadius: 3, pointBackgroundColor: "#e74c3c" }] },
         options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: "rgba(255,255,255,0.04)" }, ticks: { font: { size: 10 }, color: "#6c6c88", callback: v => "$"+v.toFixed(0) } }, x: { grid: { display: false }, ticks: { font: { size: 9 }, color: "#6c6c88", maxTicksLimit: 15 } } } }
     });
 }
@@ -1348,8 +1348,27 @@ form.addEventListener("submit", (e) => {
     showToast("Transaction ajoutee");
 });
 
+// ============ THEME TOGGLE ============
+function getTheme() {
+    return localStorage.getItem("makuta_theme") || "dark";
+}
+
+function setTheme(theme) {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("makuta_theme", theme);
+    const btn = $("theme-toggle-btn");
+    if (btn) btn.textContent = theme === "dark" ? "\u263E" : "\u2600";
+    setTimeout(() => fullRender(), 100);
+}
+
+$("theme-toggle-btn")?.addEventListener("click", () => {
+    const current = getTheme();
+    setTheme(current === "dark" ? "light" : "dark");
+});
+
 // ============ INIT ============
 async function init() {
+    setTheme(getTheme());
     loadLocal();
     updateStatus();
 
