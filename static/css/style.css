@@ -663,6 +663,122 @@ input:focus, select:focus { outline: none; border-color: var(--primary); }
 
 .toast.hidden { opacity: 0; transform: translateX(-50%) translateY(10px); pointer-events: none; }
 
+/* BUDGET CALCULATOR */
+.budget-calc {
+    padding: 4px 0;
+}
+
+.calc-presets {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+}
+
+.calc-preset-btn {
+    flex: 1;
+    min-width: 70px;
+    padding: 8px 6px;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    background: var(--card-bg);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--text-secondary);
+    text-align: center;
+}
+
+.calc-preset-btn.active {
+    border-color: var(--primary);
+    background: var(--primary-light);
+    color: var(--primary);
+}
+
+.calc-preset-btn:hover {
+    border-color: var(--primary);
+}
+
+.calc-custom-inputs {
+    margin-bottom: 8px;
+    padding: 8px;
+    background: var(--bg);
+    border-radius: 8px;
+}
+
+.form-group.third {
+    flex: 1;
+}
+
+.calc-error {
+    font-size: 12px;
+    color: var(--expense);
+    font-weight: 600;
+    text-align: center;
+    margin-top: 4px;
+}
+
+.calc-results {
+    margin-top: 8px;
+}
+
+.calc-result-item {
+    margin-bottom: 12px;
+}
+
+.calc-result-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.calc-result-label {
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.calc-result-pct {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.calc-result-bar {
+    height: 8px;
+    background: var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 4px;
+}
+
+.calc-result-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+.calc-result-amounts {
+    display: flex;
+    gap: 12px;
+    font-size: 13px;
+}
+
+.calc-result-usd {
+    font-weight: 700;
+}
+
+.calc-result-cdf {
+    color: var(--text-secondary);
+}
+
+.calc-result-error {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
 /* PREVISIONS */
 .prev-month-group {
     background: var(--bg);

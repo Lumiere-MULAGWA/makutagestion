@@ -1069,8 +1069,94 @@ $("limit-form")?.addEventListener("submit", (e) => {
     showToast(editIndex !== undefined ? "Limite modifiee" : "Limite ajoutee");
 });
 
+// ============ BUDGET CALCULATOR ============
+function updateBudgetCalc() {
+    const usd = parseFloat($("calc-budget-usd").value) || 0;
+    const cdf = parseFloat($("calc-budget-cdf").value) || 0;
+    const activePreset = document.querySelector(".calc-preset-btn.active");
+    if (!activePreset) return;
+
+    const results = $("calc-results");
+    let p1, p2, p3, customMode = false;
+
+    if (activePreset.dataset.p1 === "custom") {
+        customMode = true;
+        p1 = parseInt($("calc-custom-1").value) || 0;
+        p2 = parseInt($("calc-custom-2").value) || 0;
+        p3 = parseInt($("calc-custom-3").value) || 0;
+    } else {
+        p1 = parseInt(activePreset.dataset.p1);
+        p2 = parseInt(activePreset.dataset.p2);
+        p3 = parseInt(activePreset.dataset.p3);
+    }
+
+    const total = p1 + p2 + p3;
+    const labels = ["Besoins", "Loisirs", "Epargne"];
+    const pcts = [p1, p2, p3];
+    const colors = ["var(--primary)", "var(--warning)", "var(--income)"];
+
+    let html = `<div class="calc-custom-inputs ${customMode ? '' : 'hidden'}">
+        <div class="form-row">
+            <div class="form-group third">
+                <label>Besoins %</label>
+                <input type="number" min="0" max="100" class="calc-custom-pct" id="calc-custom-1" value="${p1}" ${customMode ? '' : 'disabled'}>
+            </div>
+            <div class="form-group third">
+                <label>Loisirs %</label>
+                <input type="number" min="0" max="100" class="calc-custom-pct" id="calc-custom-2" value="${p2}" ${customMode ? '' : 'disabled'}>
+            </div>
+            <div class="form-group third">
+                <label>Epargne %</label>
+                <input type="number" min="0" max="100" class="calc-custom-pct" id="calc-custom-3" value="${p3}" ${customMode ? '' : 'disabled'}>
+            </div>
+        </div>
+        ${total !== 100 ? `<div class="calc-error">Total: ${total}% — La somme doit faire 100%</div>` : ""}
+    </div>`;
+
+    labels.forEach((label, i) => {
+        const pct = pcts[i];
+        const amountUSD = usd * pct / 100;
+        const amountCDF = cdf * pct / 100;
+        const isValid = total === 100;
+        html += `<div class="calc-result-item">
+            <div class="calc-result-header">
+                <span class="calc-result-label" style="color:${colors[i]}">${label}</span>
+                <span class="calc-result-pct">${pct}%</span>
+            </div>
+            <div class="calc-result-bar">
+                <div class="calc-result-fill" style="width:${isValid ? pct : 0}%;background:${colors[i]}"></div>
+            </div>
+            <div class="calc-result-amounts">
+                ${isValid ? `<span class="calc-result-usd">${formatUSD(amountUSD)}</span>
+                ${cdf > 0 ? `<span class="calc-result-cdf">${formatCDF(amountCDF)}</span>` : ""}`
+                : `<span class="calc-result-error">Ajustez les pourcentages</span>`}
+            </div>
+        </div>`;
+    });
+
+    results.innerHTML = html;
+
+    if (customMode) {
+        document.querySelectorAll(".calc-custom-pct").forEach(input => {
+            input.addEventListener("input", updateBudgetCalc);
+        });
+    }
+}
+
+document.querySelectorAll(".calc-preset-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+        document.querySelectorAll(".calc-preset-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        updateBudgetCalc();
+    });
+});
+
+$("calc-budget-usd")?.addEventListener("input", updateBudgetCalc);
+$("calc-budget-cdf")?.addEventListener("input", updateBudgetCalc);
+
 // ============ PREVISIONS (FORECASTS) ============
 function renderPrevisions() {
+    updateBudgetCalc();
     const list = $("previsions-list");
     if (!previsions.length) {
         list.innerHTML = '<div class="empty-state">Aucune prevision. Cliquez sur "+ Nouvelle prevision" pour planifier vos revenus et depenses.</div>';
