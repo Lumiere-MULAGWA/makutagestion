@@ -692,14 +692,14 @@ function buildMonthlyChart(year) {
         data: {
             labels: months.map(getMonthName),
             datasets: [
-                { label: "Revenus", data: incomeData, backgroundColor: "rgba(46,125,50,0.8)", borderRadius: 4 },
-                { label: "Depenses", data: expenseData, backgroundColor: "rgba(198,40,40,0.8)", borderRadius: 4 },
+                { label: "Revenus", data: incomeData, backgroundColor: "rgba(0,184,148,0.7)", borderRadius: 6 },
+                { label: "Depenses", data: expenseData, backgroundColor: "rgba(255,107,107,0.7)", borderRadius: 6 },
             ]
         },
         options: {
             responsive: true, maintainAspectRatio: true,
-            plugins: { legend: { display: true, position: "top", labels: { boxWidth: 12, padding: 8, font: { size: 11 } } } },
-            scales: { y: { beginAtZero: true, ticks: { font: { size: 10 }, callback: v => "$"+v.toFixed(0) } }, x: { ticks: { font: { size: 10 } } } }
+            plugins: { legend: { display: true, position: "top", labels: { boxWidth: 12, padding: 8, font: { size: 11, color: "#a0a0b8" }, color: "#a0a0b8" } } },
+            scales: { y: { beginAtZero: true, grid: { color: "rgba(255,255,255,0.04)" }, ticks: { font: { size: 10 }, color: "#6c6c88", callback: v => "$"+v.toFixed(0) } }, x: { grid: { display: false }, ticks: { font: { size: 10 }, color: "#6c6c88" } } }
         }
     });
 }
@@ -717,8 +717,8 @@ function buildCategoryChart() {
     if (!labels.length) { charts.category = null; return; }
     charts.category = new Chart(ctx, {
         type: "doughnut",
-        data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 2, borderColor: "#fff" }] },
-        options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: "bottom", labels: { boxWidth: 10, padding: 6, font: { size: 10 } } } } }
+        data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 2, borderColor: "#1e1e36" }] },
+        options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: "bottom", labels: { boxWidth: 10, padding: 6, font: { size: 10, color: "#a0a0b8" }, color: "#a0a0b8" } } } }
     });
 }
 
@@ -799,8 +799,8 @@ function renderExpenseBreakdown() {
             const colors = labels.map((_,i) => CHART_COLORS[i%CHART_COLORS.length]);
             charts.expenseCategory = new Chart(ctx, {
                 type: "pie",
-                data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 2, borderColor: "#fff" }] },
-                options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: "bottom", labels: { boxWidth: 10, padding: 6, font: { size: 10 } } } } }
+                data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 2, borderColor: "#1e1e36" }] },
+                options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: "bottom", labels: { boxWidth: 10, padding: 6, font: { size: 10, color: "#a0a0b8" }, color: "#a0a0b8" } } } }
             });
         }
     }
@@ -861,8 +861,8 @@ function renderExpenseTrend() {
 
     charts.expenseTrend = new Chart(ctx, {
         type: "line",
-        data: { labels, datasets: [{ label: "Depenses", data, borderColor: "#c62828", backgroundColor: "rgba(198,40,40,0.1)", fill: true, tension: 0.4, pointRadius: 3, pointBackgroundColor: "#c62828" }] },
-        options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { font: { size: 10 }, callback: v => "$"+v.toFixed(0) } }, x: { ticks: { font: { size: 9 }, maxTicksLimit: 15 } } } }
+        data: { labels, datasets: [{ label: "Depenses", data, borderColor: "#ff6b6b", backgroundColor: "rgba(255,107,107,0.08)", fill: true, tension: 0.4, pointRadius: 3, pointBackgroundColor: "#ff6b6b" }] },
+        options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: "rgba(255,255,255,0.04)" }, ticks: { font: { size: 10 }, color: "#6c6c88", callback: v => "$"+v.toFixed(0) } }, x: { grid: { display: false }, ticks: { font: { size: 9 }, color: "#6c6c88", maxTicksLimit: 15 } } } }
     });
 }
 
